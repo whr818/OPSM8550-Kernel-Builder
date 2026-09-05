@@ -37,6 +37,21 @@ apply_susfs_task_mmu_fix() {
   return 1
 }
 
+
+apply_susfs_vma_pad_start_compat() {
+  local file="fs/proc/task_mmu.c"
+
+  [[ -f "$file" ]] || return 0
+
+  if grep -q 'VMA_PAD_START' "$file" && ! grep -q 'define VMA_PAD_START' "$file"; then
+    # 旧内核没有 VMA_PAD_START 宏，添加兼容定义
+    sed -i '1i#ifndef VMA_PAD_START#define VMA_PAD_START(vma) ((vma)->vm_start)#endif' "$file"
+    echo "[+] Added VMA_PAD_START compatibility definition for older kernel."
+  else
+    echo "[+] VMA_PAD_START compatibility not needed."
+  fi
+}
+
 apply_susfs_namespace_fix() {
   local file="fs/namespace.c"
   local block
@@ -442,6 +457,7 @@ apply_susfs_full() {
   fi
 
   patch_susfs_kernelsu_layout
+  apply_susfs_vma_pad_start_compat
 
   # Export for downstream verification
   export KSU_KERNEL_DIR="$ksu_kernel_dir"
