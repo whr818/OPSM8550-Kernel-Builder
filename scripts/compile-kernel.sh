@@ -152,6 +152,21 @@ make "${MAKE_ARGS[@]}" gki_defconfig "${ACTIVE_CONFIG_ARRAY[@]}"
 apply_variant_configs out/.config
 make "${MAKE_ARGS[@]}" olddefconfig
 
+# Disable LTO to avoid OOM on GitHub Actions runners (7GB RAM)
+if [[ -f scripts/config ]]; then
+  scripts/config --file out/.config --disable CONFIG_LTO_CLANG || true
+  scripts/config --file out/.config --disable CONFIG_LTO_CLANG_FULL || true
+  scripts/config --file out/.config --disable CONFIG_LTO || true
+  make "${MAKE_ARGS[@]}" olddefconfig
+  echo "[+] LTO disabled for CI build stability."
+else
+  sed -i 's/CONFIG_LTO_CLANG=y/# CONFIG_LTO_CLANG is not set/' out/.config || true
+  sed -i 's/CONFIG_LTO_CLANG_FULL=y/# CONFIG_LTO_CLANG_FULL is not set/' out/.config || true
+  sed -i 's/CONFIG_LTO=y/# CONFIG_LTO is not set/' out/.config || true
+  make "${MAKE_ARGS[@]}" olddefconfig
+  echo "[+] LTO disabled via sed for CI build stability."
+fi
+
 if [[ "$KSU_TYPE" != "None" ]]; then
   require_config_enabled out/.config CONFIG_KSU
 fi
