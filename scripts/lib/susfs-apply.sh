@@ -40,12 +40,18 @@ apply_susfs_task_mmu_fix() {
 
 apply_susfs_vma_pad_start_compat() {
   local file="fs/proc/task_mmu.c"
+  local tmpfile
 
   [[ -f "$file" ]] || return 0
 
   if grep -q 'VMA_PAD_START' "$file" && ! grep -q 'define VMA_PAD_START' "$file"; then
-    # 旧内核没有 VMA_PAD_START 宏，添加兼容定义
-    sed -i '1i#ifndef VMA_PAD_START#define VMA_PAD_START(vma) ((vma)->vm_start)#endif' "$file"
+    tmpfile="$(mktemp)"
+    echo '#ifndef VMA_PAD_START' > "$tmpfile"
+    echo '#define VMA_PAD_START(vma) ((vma)->vm_start)' >> "$tmpfile"
+    echo '#endif' >> "$tmpfile"
+    echo '' >> "$tmpfile"
+    cat "$file" >> "$tmpfile"
+    mv "$tmpfile" "$file"
     echo "[+] Added VMA_PAD_START compatibility definition for older kernel."
   else
     echo "[+] VMA_PAD_START compatibility not needed."
