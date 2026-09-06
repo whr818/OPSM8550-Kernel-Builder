@@ -168,10 +168,26 @@ fi
 read -r -a ACTIVE_CONFIG_ARRAY <<< "$ACTIVE_BUILD_CONFIGS"
 
 BUILD_PHASE="config generation"
+
+# === 使用官方完整 .config（如果存在）===
+if [[ -f "${WORKDIR}/official_kernel_config.gz" ]]; then
+  echo "[config] 使用官方完整 .config (gz压缩版)"
+  mkdir -p out
+  gunzip -c "${WORKDIR}/official_kernel_config.gz" > out/.config
+  make "${MAKE_ARGS[@]}" olddefconfig
+elif [[ -f "${WORKDIR}/official_kernel_config" ]]; then
+  echo "[config] 使用官方完整 .config"
+  mkdir -p out
+  cp "${WORKDIR}/official_kernel_config" out/.config
+  make "${MAKE_ARGS[@]}" olddefconfig
+else
+  echo "[config] 使用标准 defconfig 合并流程"
 apply_variant_configs arch/arm64/configs/gki_defconfig
 make "${MAKE_ARGS[@]}" gki_defconfig "${ACTIVE_CONFIG_ARRAY[@]}"
 apply_variant_configs out/.config
 make "${MAKE_ARGS[@]}" olddefconfig
+fi
+
 
 # Disable LTO to avoid OOM on GitHub Actions runners (7GB RAM)
 if [[ -f scripts/config ]]; then
