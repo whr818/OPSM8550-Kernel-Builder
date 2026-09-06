@@ -37,7 +37,7 @@ clone_repo() {
 
   git init -q "$dest"
   git -C "$dest" remote add origin "$repo"
-  git_fetch_retry "$dest" --depth=1 --no-tags origin "$commit" \
+  git_fetch_retry "$dest" --no-tags origin "$commit" \
     || { echo "::error::Failed to fetch $label commit '$commit' for branch '$branch': $repo"; exit 1; }
   git -C "$dest" checkout -q --detach FETCH_HEAD
   test "$(git -C "$dest" rev-parse HEAD)" = "$commit" \
