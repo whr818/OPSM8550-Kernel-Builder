@@ -171,6 +171,7 @@ jobs:
           INPUT_CLANG_CHOICE: ${{ inputs.clang_choice }}
           INPUT_ROOT_SOLUTION: ${{ inputs.root_solution }}
           INPUT_BUILD_MODE: ${{ inputs.build_mode }}
+          KERNEL_COMMIT_OVERRIDE: 12952a23a5da6459aaaaa3ae4bc8ce8fef952ef5
         run: bash scripts/resolve-profile.sh
 
       - name: Set build metadata
