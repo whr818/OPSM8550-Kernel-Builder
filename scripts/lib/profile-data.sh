@@ -103,6 +103,8 @@ resolve_build_profile() {
       DEVICE_NAMES="salami OP591BL1 OP594DL1 aston OP5D35L1"
       KERNEL_SOURCE="LineageOS"
       SOURCE_LAYOUT="community-flat"
+      KERNEL_REPO_OVERRIDE="https://github.com/OnePlus-11-Development/android_kernel_oneplus_sm8550.git"
+      MODULES_REPO_OVERRIDE="https://github.com/OnePlus-11-Development/android_kernel_oneplus_sm8550-modules.git"
       ;;
     "SM8550 | OnePlus 11 / 12R | crDroid")
       PROFILE_ID="sm8550-oneplus11-12r-crdroid"
