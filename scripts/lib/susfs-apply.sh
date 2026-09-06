@@ -53,9 +53,6 @@ apply_susfs_memory_fix() {
 '
 
   # insert_block_after_first_match not available, skipped
-  #     echo "[+] Applied fallback susfs include fix to memory.c."
-  #     return 0
-  fi
 
   # Fallback: try inserting before trace/hooks/mm.h
   if insert_block_before_first_match "$file" '#include <trace/hooks/mm.h>' "$block" 'susfs_def.h'; then
