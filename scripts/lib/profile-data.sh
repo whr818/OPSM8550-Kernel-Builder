@@ -180,7 +180,7 @@ resolve_build_profile() {
     sm8550)
       PLATFORM_SLUG="8gen2"
       PLATFORM_NAME="Snapdragon 8 Gen 2"
-      BUILD_CONFIGS="vendor/kalama_GKI.config vendor/oplus/kalama_GKI.config"
+      BUILD_CONFIGS="vendor/kalama_GKI.config vendor/oplus/kalama_GKI.config vendor/oplus/salami.config"
       OFFICIAL_BUILD_TARGET="kalama"
       OFFICIAL_GKI_FRAGMENT="arch/arm64/configs/vendor/kalama_GKI.config"
       ;;
