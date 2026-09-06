@@ -52,9 +52,9 @@ apply_susfs_memory_fix() {
 #endif // #ifdef CONFIG_KSU_SUSFS_SUS_MAP
 '
 
-  if insert_block_after_first_match "$file" '#include <linux/vmalloc.h>' "$block" 'susfs_def.h'; then
-    echo "[+] Applied fallback susfs include fix to memory.c."
-    return 0
+  # insert_block_after_first_match not available, skipped
+  #     echo "[+] Applied fallback susfs include fix to memory.c."
+  #     return 0
   fi
 
   # Fallback: try inserting before trace/hooks/mm.h
