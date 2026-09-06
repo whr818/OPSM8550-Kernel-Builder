@@ -81,6 +81,27 @@ mkdir -p "${CCACHE_DIR}"
 
 cd "${SOC}"
 
+# === Pre-check: ensure vendor/oplus configs exist ===
+VENDOR_OPLUS_DIR="arch/arm64/configs/vendor/oplus"
+if [ ! -d "$VENDOR_OPLUS_DIR" ]; then
+  echo "[pre-check] vendor/oplus directory missing, creating..."
+  mkdir -p "$VENDOR_OPLUS_DIR"
+fi
+
+if [ ! -f "$VENDOR_OPLUS_DIR/kalama_GKI.config" ]; then
+  echo "[pre-check] kalama_GKI.config missing, downloading..."
+  curl -sL "https://raw.githubusercontent.com/OnePlus-11-Development/android_kernel_oneplus_sm8550/lineage-20/arch/arm64/configs/vendor/oplus/kalama_GKI.config" -o "$VENDOR_OPLUS_DIR/kalama_GKI.config"
+fi
+
+if [ ! -f "$VENDOR_OPLUS_DIR/salami.config" ]; then
+  echo "[pre-check] salami.config missing, downloading..."
+  curl -sL "https://raw.githubusercontent.com/OnePlus-11-Development/android_kernel_oneplus_sm8550/lineage-20/arch/arm64/configs/vendor/oplus/salami.config" -o "$VENDOR_OPLUS_DIR/salami.config"
+fi
+
+echo "[pre-check] vendor/oplus directory contents:"
+ls -la "$VENDOR_OPLUS_DIR/"
+# === End pre-check ===
+
 SOURCE_DATE_EPOCH="$(git show -s --format=%ct "$KERNEL_COMMIT")"
 export SOURCE_DATE_EPOCH
 export KBUILD_BUILD_TIMESTAMP
