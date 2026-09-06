@@ -38,6 +38,36 @@ apply_susfs_task_mmu_fix() {
 }
 
 
+apply_susfs_memory_fix() {
+  local file="mm/memory.c"
+  local block
+
+  if grep -q 'susfs_def.h' "$file"; then
+    echo "[+] memory.c already includes susfs_def.h."
+    return 0
+  fi
+
+  block=$'#ifdef CONFIG_KSU_SUSFS_SUS_MAP
+#include <linux/susfs_def.h>
+#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MAP
+'
+
+  if insert_block_after_first_match "$file" '#include <linux/vmalloc.h>' "$block" 'susfs_def.h'; then
+    echo "[+] Applied fallback susfs include fix to memory.c."
+    return 0
+  fi
+
+  # Fallback: try inserting before trace/hooks/mm.h
+  if insert_block_before_first_match "$file" '#include <trace/hooks/mm.h>' "$block" 'susfs_def.h'; then
+    echo "[+] Applied fallback susfs include fix to memory.c (before trace/hooks/mm.h)."
+    return 0
+  fi
+
+  echo "[-] Could not find a stable insertion point in $file."
+  return 1
+}
+
+
 apply_susfs_vma_pad_start_compat() {
   local file="fs/proc/task_mmu.c"
   local tmpfile
@@ -100,6 +130,9 @@ resolve_known_susfs_rejects() {
         ;;
       ./fs/namespace.c.rej)
         grep -q 'susfs_def.h' "$reject" && apply_susfs_namespace_fix || unknown=1
+        ;;
+      ./mm/memory.c.rej)
+        grep -q 'susfs_def.h' "$reject" && apply_susfs_memory_fix || unknown=1
         ;;
       *)
         unknown=1
