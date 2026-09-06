@@ -153,6 +153,17 @@ if [[ ! "$KERNEL_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
   exit 1
 fi
 
+# Allow overriding the resolved kernel commit (e.g. pin to a specific LTS version)
+if [[ -n "${KERNEL_COMMIT_OVERRIDE:-}" ]]; then
+  if [[ "$KERNEL_COMMIT_OVERRIDE" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "[config] KERNEL_COMMIT_OVERRIDE set, using $KERNEL_COMMIT_OVERRIDE instead of branch HEAD"
+    KERNEL_COMMIT="$KERNEL_COMMIT_OVERRIDE"
+  else
+    echo "::error::KERNEL_COMMIT_OVERRIDE must be a 40-char hex SHA, got: $KERNEL_COMMIT_OVERRIDE"
+    exit 1
+  fi
+fi
+
 MODULES_COMMIT="$(git_ls_remote_retry --exit-code --heads "$MODULES_REPO" "$MODULES_BRANCH" \
   | awk 'NR == 1 {print $1}')"
 if [[ ! "$MODULES_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
