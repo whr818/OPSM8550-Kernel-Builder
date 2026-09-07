@@ -293,9 +293,6 @@ EOFIX
       echo "[+] Fixed KernelSU SELinux compatibility for older kernel (added missing macros)."
     fi
   fi
-  fi
-  fi
-fi
 CONFIG_SECONDS=$(($(date +%s) - CONFIG_STARTED_AT))
 
 if [[ "$BUILD_MODE" == "Patch/config validation only" ]]; then
