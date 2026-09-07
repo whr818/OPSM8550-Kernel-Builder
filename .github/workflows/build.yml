@@ -289,6 +289,8 @@ jobs:
           "${GITHUB_WORKSPACE}/toolchains/${CLANG_VERSION}/bin/clang" --version | head -n 1
 
       - name: Apply integrations and build
+        env:
+          USE_OFFICIAL_CONFIG: false
         run: bash "${GITHUB_WORKSPACE}/scripts/compile-kernel.sh"
 
       - name: Make device-checked AnyKernel3 package
