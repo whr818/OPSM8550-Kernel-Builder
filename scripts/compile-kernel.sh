@@ -274,13 +274,16 @@ if [[ -f include/linux/susfs_def.h ]]; then
     sed -i "1i #include <linux/uidgid.h>" include/linux/susfs_def.h
     sed -i "1i #include <linux/thread_info.h>" include/linux/susfs_def.h
     echo "[+] Fixed susfs_def.h missing includes for older kernel."
+  fi
+fi
 
-  # === Fix KernelSU SELinux compatibility for older kernels ===
-  if [[ -f drivers/kernelsu/selinux/sepolicy.c ]]; then
-    # Check if policydb has android_netlink_route member
-    if ! grep -rq "android_netlink_route" security/selinux/ 2>/dev/null; then
-      # Add missing macro definitions at the top of the file
-      cat > /tmp/selinux_fix.h << 'EOFIX'
+# === Fix KernelSU SELinux compatibility for older kernels (5.15.137 lacks android_netlink_*) ===
+if [[ -f drivers/kernelsu/selinux/sepolicy.c ]]; then
+  if ! grep -rq "android_netlink_route" security/selinux/ 2>/dev/null; then
+    echo "[+] Detected older kernel without android_netlink_* members, fixing sepolicy.c..."
+    
+    # Step 1: Add missing macro definitions at the top
+    cat > /tmp/selinux_fix.h << 'EOFIX'
 #ifndef POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE
 #define POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE 0
 #endif
@@ -288,11 +291,20 @@ if [[ -f include/linux/susfs_def.h ]]; then
 #define POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH 0
 #endif
 EOFIX
-      cat /tmp/selinux_fix.h drivers/kernelsu/selinux/sepolicy.c > /tmp/sepolicy_fixed.c
-      mv /tmp/sepolicy_fixed.c drivers/kernelsu/selinux/sepolicy.c
-      echo "[+] Fixed KernelSU SELinux compatibility for older kernel (added missing macros)."
-    fi
+    cat /tmp/selinux_fix.h drivers/kernelsu/selinux/sepolicy.c > /tmp/sepolicy_fixed.c
+    mv /tmp/sepolicy_fixed.c drivers/kernelsu/selinux/sepolicy.c
+    
+    # Step 2: Comment out lines that directly access android_netlink_* members
+    # Only comment non-preprocessor lines (avoid breaking #if/#endif)
+    sed -i '/^#/!s|.*android_netlink_route.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+    sed -i '/^#/!s|.*android_netlink_getneigh.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+    sed -i '/^#/!s|.*POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+    sed -i '/^#/!s|.*POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+    
+    echo "[+] Fixed KernelSU SELinux compatibility (macros + member access commented)."
   fi
+fi
+
 CONFIG_SECONDS=$(($(date +%s) - CONFIG_STARTED_AT))
 
 if [[ "$BUILD_MODE" == "Patch/config validation only" ]]; then
