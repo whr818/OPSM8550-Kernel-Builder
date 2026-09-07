@@ -40,27 +40,66 @@ apply_susfs_task_mmu_fix() {
 
 apply_susfs_memory_fix() {
   local file="mm/memory.c"
-  local block
 
   if grep -q 'susfs_def.h' "$file"; then
     echo "[+] memory.c already includes susfs_def.h."
     return 0
   fi
 
-  block=$'#ifdef CONFIG_KSU_SUSFS_SUS_MAP
-#include <linux/susfs_def.h>
-#endif // #ifdef CONFIG_KSU_SUSFS_SUS_MAP
-'
+  # Use sed to insert after linux/vmalloc.h include
+  if sed -i '/#include <linux/vmalloc.h>/a#ifdef CONFIG_KSU_SUSFS_SUS_MAP#include <linux/susfs_def.h>#endif' "$file" 2>/dev/null; then
+    if grep -q 'susfs_def.h' "$file"; then
+      echo "[+] Applied susfs include fix to memory.c (sed)."
+      return 0
+    fi
+  fi
 
-  # insert_block_after_first_match not available, skipped
+  # Fallback: insert before trace/hooks/mm.h
+  if sed -i '/#include <trace/hooks/mm.h>/i#ifdef CONFIG_KSU_SUSFS_SUS_MAP#include <linux/susfs_def.h>#endif' "$file" 2>/dev/null; then
+    if grep -q 'susfs_def.h' "$file"; then
+      echo "[+] Applied susfs include fix to memory.c (sed fallback)."
+      return 0
+    fi
+  fi
 
-  # Fallback: try inserting before trace/hooks/mm.h
-  if insert_block_before_first_match "$file" '#include <trace/hooks/mm.h>' "$block" 'susfs_def.h'; then
-    echo "[+] Applied fallback susfs include fix to memory.c (before trace/hooks/mm.h)."
+  echo "[-] Could not apply susfs include fix to $file."
+  return 1
+}
+
+
+apply_susfs_generic_include_fix() {
+  local file="$1"
+
+  if [[ ! -f "$file" ]]; then
+    echo "[-] File not found: $file"
+    return 1
+  fi
+
+  if grep -q 'susfs_def.h' "$file"; then
+    echo "[+] $file already includes susfs_def.h."
     return 0
   fi
 
-  echo "[-] Could not find a stable insertion point in $file."
+  # Try to insert after the last #include <linux/...> line before trace/events
+  if sed -i '/^#include <linux/.*>$/!b; :a; n; /^#include/ba; i#if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)#include <linux/susfs_def.h>#endif' "$file" 2>/dev/null; then
+    if grep -q 'susfs_def.h' "$file"; then
+      echo "[+] Applied generic susfs include fix to $file."
+      return 0
+    fi
+  fi
+
+  # Simple fallback: append after first #include line
+  if sed -i '0,/^#include /s//&#ifdef CONFIG_KSU_SUSFS_SUS_MAP
+#include <linux/susfs_def.h>
+#endif
+/' "$file" 2>/dev/null; then
+    if grep -q 'susfs_def.h' "$file"; then
+      echo "[+] Applied generic susfs include fix to $file (fallback)."
+      return 0
+    fi
+  fi
+
+  echo "[-] Could not apply susfs include fix to $file."
   return 1
 }
 
@@ -130,6 +169,9 @@ resolve_known_susfs_rejects() {
         ;;
       ./mm/memory.c.rej)
         grep -q 'susfs_def.h' "$reject" && apply_susfs_memory_fix || unknown=1
+        ;;
+      ./fs/proc/base.c.rej)
+        grep -q 'susfs_def.h' "$reject" && apply_susfs_generic_include_fix "fs/proc/base.c" || unknown=1
         ;;
       *)
         unknown=1
