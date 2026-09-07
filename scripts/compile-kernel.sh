@@ -280,10 +280,10 @@ if [[ -f include/linux/susfs_def.h ]]; then
     # Check if policydb has android_netlink_route member
     if ! grep -rq "android_netlink_route" security/selinux/ 2>/dev/null; then
       # Comment out lines using android_netlink_route and android_netlink_getneigh
-      sed -i 's/.*android_netlink_route.*/// &/' drivers/kernelsu/selinux/sepolicy.c
-      sed -i 's/.*android_netlink_getneigh.*/// &/' drivers/kernelsu/selinux/sepolicy.c
-      sed -i 's/.*POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE.*/// &/' drivers/kernelsu/selinux/sepolicy.c
-      sed -i 's/.*POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH.*/// &/' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's|.*android_netlink_route.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's|.*android_netlink_getneigh.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's|.*POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE.*|// &|' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's|.*POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH.*|// &|' drivers/kernelsu/selinux/sepolicy.c
       echo "[+] Fixed KernelSU SELinux compatibility for older kernel (android_netlink_* not available)."
     fi
   fi
