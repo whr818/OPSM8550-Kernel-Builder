@@ -274,6 +274,19 @@ if [[ -f include/linux/susfs_def.h ]]; then
     sed -i "1i #include <linux/uidgid.h>" include/linux/susfs_def.h
     sed -i "1i #include <linux/thread_info.h>" include/linux/susfs_def.h
     echo "[+] Fixed susfs_def.h missing includes for older kernel."
+
+  # === Fix KernelSU SELinux compatibility for older kernels ===
+  if [[ -f drivers/kernelsu/selinux/sepolicy.c ]]; then
+    # Check if policydb has android_netlink_route member
+    if ! grep -rq "android_netlink_route" security/selinux/ 2>/dev/null; then
+      # Comment out lines using android_netlink_route and android_netlink_getneigh
+      sed -i 's/.*android_netlink_route.*/// &/' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's/.*android_netlink_getneigh.*/// &/' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's/.*POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE.*/// &/' drivers/kernelsu/selinux/sepolicy.c
+      sed -i 's/.*POLICYDB_CONFIG_ANDROID_NETLINK_GETNEIGH.*/// &/' drivers/kernelsu/selinux/sepolicy.c
+      echo "[+] Fixed KernelSU SELinux compatibility for older kernel (android_netlink_* not available)."
+    fi
+  fi
   fi
 fi
 CONFIG_SECONDS=$(($(date +%s) - CONFIG_STARTED_AT))
