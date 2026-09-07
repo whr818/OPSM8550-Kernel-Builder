@@ -230,6 +230,22 @@ if [[ -f scripts/config ]]; then
   fi
   make "${MAKE_ARGS[@]}" olddefconfig
   echo "[+] KSU/SuSFS config enabled for official .config."
+
+  # Disable BTF to avoid .btf.vmlinux.bin.o unknown file type error
+  scripts/config --file out/.config --disable CONFIG_DEBUG_INFO_BTF || true
+  scripts/config --file out/.config --disable CONFIG_DEBUG_INFO_BTF_MODULES || true
+  
+  # Ensure KernelSU core configs are enabled
+  scripts/config --file out/.config --enable CONFIG_KSU || true
+  scripts/config --file out/.config --enable CONFIG_KSU_SUSFS || true
+  scripts/config --file out/.config --enable CONFIG_KSU_DEFAULT_SUSFS || true
+  scripts/config --file out/.config --enable CONFIG_KSU_SUSFS_SUS_MAP || true
+  scripts/config --file out/.config --enable CONFIG_KSU_SUSFS_OPEN_REDIRECT || true
+  scripts/config --file out/.config --disable CONFIG_KSU_MANUAL_HOOK || true
+  scripts/config --file out/.config --disable CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS || true
+  
+  make "${MAKE_ARGS[@]}" olddefconfig
+  echo "[+] Additional config fixes applied (BTF disabled, KSU configs ensured)."
 fi
 if [[ "$KSU_TYPE" != "None" ]]; then
   require_config_enabled out/.config CONFIG_KSU
