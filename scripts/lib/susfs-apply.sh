@@ -84,6 +84,37 @@ apply_susfs_simple_include_fix() {
   fi
 
   rm -f "$tmpfile"
+  
+  # Fallback: insert at the beginning of the file (after first #include line)
+  local tmpfile2="$(mktemp)"
+  if awk '
+    NR == 1 && /^#include/ {
+      print "#if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)"
+      print "#include <linux/susfs_def.h>"
+      print "#endif"
+      print
+      found=1
+      next
+    }
+    !found && /^#include/ {
+      print "#if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)"
+      print "#include <linux/susfs_def.h>"
+      print "#endif"
+      print
+      found=1
+      next
+    }
+    { print }
+    END { if (!found) exit 1 }
+  ' "$file" > "$tmpfile2" 2>/dev/null; then
+    mv "$tmpfile2" "$file"
+    if grep -q 'susfs_def.h' "$file"; then
+      echo "[+] Applied susfs include fix to $file (fallback: at beginning)."
+      return 0
+    fi
+  fi
+  
+  rm -f "$tmpfile2"
   echo "[-] Could not apply susfs include fix to $file."
   return 1
 }
