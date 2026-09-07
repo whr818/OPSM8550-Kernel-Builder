@@ -281,16 +281,17 @@ fi
 if [[ -f drivers/kernelsu/selinux/sepolicy.c ]]; then
   echo "[+] Checking sepolicy.c for android_netlink_* members..."
   
-  # Check if the problematic members exist in sepolicy.c
   if grep -q "android_netlink_route" drivers/kernelsu/selinux/sepolicy.c; then
-    echo "[+] Found android_netlink_route in sepolicy.c, applying fix..."
+    echo "[+] Found android_netlink_route in sepolicy.c"
     
-    # Debug: print the problematic lines before fix
-    echo "==== BEFORE FIX (lines 990-1010) ===="
-    sed -n '990,1010p' drivers/kernelsu/selinux/sepolicy.c || true
-    echo "==== END BEFORE FIX ===="
+    # Debug: print ALL lines containing android_netlink with line numbers and context
+    echo "==== ALL android_netlink_route OCCURRENCES (with 5 lines context) ===="
+    grep -n -B5 -A5 "android_netlink_route" drivers/kernelsu/selinux/sepolicy.c || true
+    echo "==== ALL android_netlink_getneigh OCCURRENCES (with 5 lines context) ===="
+    grep -n -B5 -A5 "android_netlink_getneigh" drivers/kernelsu/selinux/sepolicy.c || true
+    echo "==== END DEBUG ===="
     
-    # Step 1: Add missing macro definitions at the top
+    # For now, just add macros and DON'T replace (to see the exact error)
     cat > /tmp/selinux_fix.h << 'EOFIX'
 #ifndef POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE
 #define POLICYDB_CONFIG_ANDROID_NETLINK_ROUTE 0
@@ -302,21 +303,9 @@ EOFIX
     cat /tmp/selinux_fix.h drivers/kernelsu/selinux/sepolicy.c > /tmp/sepolicy_fixed.c
     mv /tmp/sepolicy_fixed.c drivers/kernelsu/selinux/sepolicy.c
     
-    # Step 2: GLOBALLY replace direct member access with 0 using sed (perl may not be available)
-    # Match: anything.android_netlink_route or anything->android_netlink_route
-    sed -i 's/[a-zA-Z0-9_]*.android_netlink_route[a-zA-Z0-9_]*/0/g' drivers/kernelsu/selinux/sepolicy.c
-    sed -i 's/[a-zA-Z0-9_]*->android_netlink_route[a-zA-Z0-9_]*/0/g' drivers/kernelsu/selinux/sepolicy.c
-    sed -i 's/[a-zA-Z0-9_]*.android_netlink_getneigh[a-zA-Z0-9_]*/0/g' drivers/kernelsu/selinux/sepolicy.c
-    sed -i 's/[a-zA-Z0-9_]*->android_netlink_getneigh[a-zA-Z0-9_]*/0/g' drivers/kernelsu/selinux/sepolicy.c
-    
-    # Debug: print the lines after fix
-    echo "==== AFTER FIX (lines 990-1010) ===="
-    sed -n '990,1010p' drivers/kernelsu/selinux/sepolicy.c || true
-    echo "==== END AFTER FIX ===="
-    
-    echo "[+] Fixed KernelSU SELinux compatibility (sed global replacement)."
+    echo "[+] Added macros only (debug mode - no replacement yet)."
   else
-    echo "[+] No android_netlink_route found in sepolicy.c, skipping fix."
+    echo "[+] No android_netlink_route found in sepolicy.c."
   fi
 fi
 
