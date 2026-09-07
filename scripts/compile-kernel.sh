@@ -251,6 +251,14 @@ if [[ "$KSU_TYPE" == *KPM* ]]; then
   require_config_enabled out/.config CONFIG_KALLSYMS_ALL
 fi
 
+# === Fix susfs_def.h missing includes for older kernels ===
+if [[ -f include/linux/susfs_def.h ]]; then
+  if ! grep -q "linux/thread_info.h" include/linux/susfs_def.h; then
+    sed -i "1i #include <linux/thread_info.h>" include/linux/susfs_def.h
+    sed -i "1i #include <linux/uidgid.h>" include/linux/susfs_def.h
+    echo "[+] Fixed susfs_def.h missing includes for older kernel."
+  fi
+fi
 CONFIG_SECONDS=$(($(date +%s) - CONFIG_STARTED_AT))
 
 if [[ "$BUILD_MODE" == "Patch/config validation only" ]]; then
