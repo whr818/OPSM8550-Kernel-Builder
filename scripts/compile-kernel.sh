@@ -280,7 +280,15 @@ fi
 # === Fix KernelSU SELinux compatibility for older kernels (5.15.137 lacks android_netlink_*) ===
 if [[ -f drivers/kernelsu/selinux/sepolicy.c ]]; then
   if ! grep -rq "android_netlink_route" security/selinux/ 2>/dev/null; then
-    echo "[+] Detected older kernel without android_netlink_* members, fixing sepolicy.c..."
+    echo "[+] Detected older kernel without android_netlink_* members"
+    
+    # Debug: print lines containing android_netlink_route with context
+    echo "==== DEBUG: android_netlink_route usage ===="
+    grep -n -B2 -A2 "android_netlink_route" drivers/kernelsu/selinux/sepolicy.c || true
+    echo "==== DEBUG: android_netlink_getneigh usage ===="
+    grep -n -B2 -A2 "android_netlink_getneigh" drivers/kernelsu/selinux/sepolicy.c || true
+    echo "==== DEBUG: POLICYDB_CONFIG_ANDROID_NETLINK usage ===="
+    grep -n -B2 -A2 "POLICYDB_CONFIG_ANDROID_NETLINK" drivers/kernelsu/selinux/sepolicy.c || true
     
     # Step 1: Add missing macro definitions at the top
     cat > /tmp/selinux_fix.h << 'EOFIX'
@@ -294,17 +302,10 @@ EOFIX
     cat /tmp/selinux_fix.h drivers/kernelsu/selinux/sepolicy.c > /tmp/sepolicy_fixed.c
     mv /tmp/sepolicy_fixed.c drivers/kernelsu/selinux/sepolicy.c
     
-    # Step 2: Replace direct member access with safe defaults (not commenting out lines!)
-    # Use sed to replace .android_netlink_route with a safe value, but only in non-preprocessor lines
-    sed -i 's/.android_netlink_route/.android_netlink_route_disabled/g' drivers/kernelsu/selinux/sepolicy.c
-    sed -i 's/.android_netlink_getneigh/.android_netlink_getneigh_disabled/g' drivers/kernelsu/selinux/sepolicy.c
-    
-    # Step 3: Add dummy member definitions to avoid "no member" errors
-    # Actually, better approach: if the struct doesn't have these members, we need to add them
-    # But we can't easily modify the kernel struct. Instead, let's check if the code uses #if guards
-    # If not, we need a different approach
-    
-    echo "[+] Fixed KernelSU SELinux compatibility (macros + member rename)."
+    # Step 2: Check if direct member access exists and handle it
+    # If the code uses policydb.android_netlink_route directly, we need to handle it
+    # For now, let's just add the macros and see if the code is guarded by #if
+    echo "[+] Added SELinux compatibility macros (debug mode)"
   fi
 fi
 
