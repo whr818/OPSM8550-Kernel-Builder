@@ -209,6 +209,28 @@ else
   echo "[+] LTO disabled via sed for CI build stability."
 fi
 
+# === Enable KSU/SuSFS config for official .config ===
+if [[ -f scripts/config ]]; then
+  scripts/config --file out/.config --enable CONFIG_KSU || true
+  if [[ "$KSU_TYPE" == *susfs* ]]; then
+    scripts/config --file out/.config --enable CONFIG_KSU_SUSFS || true
+    scripts/config --file out/.config --enable CONFIG_KSU_SUSFS_SUS_MAP || true
+    scripts/config --file out/.config --enable CONFIG_KSU_SUSFS_OPEN_REDIRECT || true
+    scripts/config --file out/.config --disable CONFIG_KSU_MANUAL_HOOK || true
+    scripts/config --file out/.config --disable CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS || true
+  fi
+  if [[ "$KSU_TYPE" == *nomount* ]]; then
+    scripts/config --file out/.config --enable CONFIG_KEYS || true
+    scripts/config --file out/.config --enable CONFIG_NOMOUNT || true
+  fi
+  if [[ "$KSU_TYPE" == *KPM* ]]; then
+    scripts/config --file out/.config --enable CONFIG_KPM || true
+    scripts/config --file out/.config --enable CONFIG_KALLSYMS || true
+    scripts/config --file out/.config --enable CONFIG_KALLSYMS_ALL || true
+  fi
+  make "${MAKE_ARGS[@]}" olddefconfig
+  echo "[+] KSU/SuSFS config enabled for official .config."
+fi
 if [[ "$KSU_TYPE" != "None" ]]; then
   require_config_enabled out/.config CONFIG_KSU
 fi
