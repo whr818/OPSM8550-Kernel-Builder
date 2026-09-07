@@ -170,7 +170,11 @@ read -r -a ACTIVE_CONFIG_ARRAY <<< "$ACTIVE_BUILD_CONFIGS"
 BUILD_PHASE="config generation"
 
 # === 使用嵌入的官方完整 .config (base64编码的gz) ===
-if [[ -f "${GITHUB_WORKSPACE}/official_kernel_config.b64" ]]; then
+# 通过 USE_OFFICIAL_CONFIG 环境变量控制是否使用官方 .config
+# 默认使用官方 .config；设置为 false 则使用标准 defconfig 合并流程
+USE_OFFICIAL_CONFIG="${USE_OFFICIAL_CONFIG:-true}"
+
+if [[ "$USE_OFFICIAL_CONFIG" == "true" ]] && [[ -f "${GITHUB_WORKSPACE}/official_kernel_config.b64" ]]; then
   echo "[config] 使用官方完整 .config (base64+gz, 5.15.137 Nameless-AOSP13)"
   mkdir -p out
   base64 -d "${GITHUB_WORKSPACE}/official_kernel_config.b64" | gunzip > out/.config
