@@ -47,7 +47,7 @@ configure_anykernel_properties() {
   }
 
   set_ak_property "$file" kernel.string "$kernel_string"
-  set_ak_property "$file" do.devicecheck 1
+  set_ak_property "$file" do.devicecheck 0
   set_ak_property "$file" supported.versions "$android_versions"
 
   for index in 1 2 3 4 5; do
