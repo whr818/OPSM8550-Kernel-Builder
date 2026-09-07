@@ -170,20 +170,20 @@ read -r -a ACTIVE_CONFIG_ARRAY <<< "$ACTIVE_BUILD_CONFIGS"
 BUILD_PHASE="config generation"
 
 # === 使用嵌入的官方完整 .config (base64编码的gz) ===
-if [[ -f "${WORKDIR}/official_kernel_config.b64" ]]; then
+if [[ -f "${GITHUB_WORKSPACE}/official_kernel_config.b64" ]]; then
   echo "[config] 使用官方完整 .config (base64+gz, 5.15.137 Nameless-AOSP13)"
   mkdir -p out
-  base64 -d "${WORKDIR}/official_kernel_config.b64" | gunzip > out/.config
+  base64 -d "${GITHUB_WORKSPACE}/official_kernel_config.b64" | gunzip > out/.config
   make "${MAKE_ARGS[@]}" olddefconfig
-elif [[ -f "${WORKDIR}/official_kernel_config.gz" ]]; then
+elif [[ -f "${GITHUB_WORKSPACE}/official_kernel_config.gz" ]]; then
   echo "[config] 使用官方完整 .config (gz压缩版)"
   mkdir -p out
-  gunzip -c "${WORKDIR}/official_kernel_config.gz" > out/.config
+  gunzip -c "${GITHUB_WORKSPACE}/official_kernel_config.gz" > out/.config
   make "${MAKE_ARGS[@]}" olddefconfig
-elif [[ -f "${WORKDIR}/official_kernel_config" ]]; then
+elif [[ -f "${GITHUB_WORKSPACE}/official_kernel_config" ]]; then
   echo "[config] 使用官方完整 .config"
   mkdir -p out
-  cp "${WORKDIR}/official_kernel_config" out/.config
+  cp "${GITHUB_WORKSPACE}/official_kernel_config" out/.config
   make "${MAKE_ARGS[@]}" olddefconfig
 else
   echo "[config] 使用标准 defconfig 合并流程"
