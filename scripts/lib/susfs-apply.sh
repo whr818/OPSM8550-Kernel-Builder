@@ -65,7 +65,7 @@ apply_susfs_simple_include_fix() {
   # Use awk to insert after the specified pattern
   local tmpfile="$(mktemp)"
   if awk -v pat="$after_pattern" '
-    $0 ~ pat {
+    index($0, pat) > 0 {
       print
       print "#if defined(CONFIG_KSU_SUSFS_SUS_MAP) || defined(CONFIG_KSU_SUSFS_OPEN_REDIRECT)"
       print "#include <linux/susfs_def.h>"
